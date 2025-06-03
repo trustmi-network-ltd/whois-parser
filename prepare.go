@@ -180,15 +180,20 @@ func prepareEDU(text string) string {
 				result += "\n" + v
 			} else {
 				// address ending now jump to phone
-				if tokens[token][index] == "Address" && strings.HasPrefix(v, "+") {
+				if index < len(tokens[token]) && tokens[token][index] == "Address" && strings.HasPrefix(v, "+") {
 					found := xslice.Index(tokens[token], "Phone")
 					if found != -1 {
 						index = found
 					}
 				}
-				result += fmt.Sprintf("\n%s %s: %s", token[:len(token)-1], tokens[token][index], v)
-				if tokens[token][index] != "Address" {
-					index++
+				if index < len(tokens[token]) {
+					result += fmt.Sprintf("\n%s %s: %s", token[:len(token)-1], tokens[token][index], v)
+					if tokens[token][index] != "Address" {
+						index++
+					}
+				} else {
+					// If we've run out of keys, just append the value with the token name
+					result += fmt.Sprintf("\n%s: %s", token[:len(token)-1], v)
 				}
 			}
 		}
@@ -553,9 +558,13 @@ func prepareCH(text string) string {
 				lastTokenIndex++
 				v = strings.TrimSpace(v[len(phoneMark)-1:])
 			}
-			result += fmt.Sprintf("\n%s: %s", tokens[lastToken][lastTokenIndex], v)
-			if tokens[lastToken][lastTokenIndex] != "Registrar street" {
-				lastTokenIndex++
+			if lastTokenIndex < len(tokens[lastToken]) {
+				result += fmt.Sprintf("\n%s: %s", tokens[lastToken][lastTokenIndex], v)
+				if tokens[lastToken][lastTokenIndex] != "Registrar street" {
+					lastTokenIndex++
+				}
+			} else {
+				result += fmt.Sprintf("\n%s: %s", lastToken, v)
 			}
 		} else {
 			result += fmt.Sprintf("\n%s: %s", lastToken, v)
@@ -874,7 +883,7 @@ func prepareTK(text string) string {
 		if token == "Domain" && strings.Contains(v, " is ") {
 			vv := strings.Split(v, " is ")
 			v = fmt.Sprintf("Name: %s\nStatus: %s", vv[0], vv[1])
-		} else if token == "Registrant" && !strings.Contains(v, ":") {
+		} else if token == "Registrant" && !strings.Contains(v, ":") && index < len(fields[token]) {
 			v = fmt.Sprintf("%s: %s", fields[token][index], v)
 			index++
 		}
@@ -929,8 +938,13 @@ func prepareNL(text string) string {
 			if token == "" {
 				result += "\n" + v
 			} else {
-				result += fmt.Sprintf("\n%s %s: %s", token[:len(token)-1], tokens[token][index], v)
-				index++
+				if index < len(tokens[token]) {
+					result += fmt.Sprintf("\n%s %s: %s", token[:len(token)-1], tokens[token][index], v)
+					index++
+				} else {
+					// If we've run out of keys, just append the value with the token name
+					result += fmt.Sprintf("\n%s: %s", token[:len(token)-1], v)
+				}
 			}
 		}
 	}
