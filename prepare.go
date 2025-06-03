@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/likexian/gokit/assert"
 	"github.com/likexian/gokit/xslice"
@@ -93,6 +94,10 @@ func Prepare(text, ext string) (string, bool) { //nolint:cyclop
 		return prepareUA(text), true
 	case "at":
 		return prepareAT(text), true
+	case "sk":
+		return prepareSK(text), true
+	case "gg":
+		return prepareGG(text), true
 	default:
 		return text, false
 	}
@@ -1435,4 +1440,124 @@ func prepareAT(text string) string {
 	}
 
 	return result
+}
+
+// prepareSK do prepare the .sk domain
+func prepareSK(text string) string {
+
+	tokens := map[string]string{
+		"Domain registrant":      "Registrant",
+		"Authorised Registrar":   "Registrar",
+		"Administrative Contact": "Administrative",
+		"Technical Contact":      "Technical",
+	}
+
+	result := ""
+	prefix := ""
+
+	for _, v := range strings.Split(text, "\n") {
+
+		v = strings.TrimSpace(v)
+		v = strings.Replace(v, "\r", "", -1)
+
+		if v == "" {
+			continue
+		}
+
+		if strings.Contains(v, ":") {
+			vs := strings.SplitN(v, ":", 2)
+			value := strings.TrimSpace(vs[1])
+			token := strings.TrimSpace(vs[0])
+
+			if _, ok := tokens[token]; ok {
+				prefix = tokens[token]
+				prefix = fmt.Sprintf("%s ", prefix)
+			}
+
+			v = fmt.Sprintf("%s%s:%s", prefix, token, value)
+
+		}
+		result += "\n" + v
+	}
+
+	return result
+}
+
+func prepareGG(text string) string {
+	tokens := map[string]string{
+		"Relevant dates": "created",
+		"Registrant":     "registrant_name",
+		"Registrar":      "registrar_name",
+	}
+
+	result := ""
+	previousSectionHeader := ""
+	sectionHeader := ""
+
+	for _, v := range strings.Split(text, "\n") {
+		v = strings.TrimSpace(v)
+
+		if v == "" {
+			previousSectionHeader = ""
+			continue
+		}
+
+		if strings.HasSuffix(v, ":") {
+			sectionHeader = v[:len(v)-1]
+		}
+
+		parseRegistrant := func(input string) (string, string, error) {
+			openParenIndex := strings.Index(input, "(")
+			closeParenIndex := strings.LastIndex(input, ")")
+
+			if openParenIndex == -1 || closeParenIndex == -1 || openParenIndex > closeParenIndex {
+				return "", "", fmt.Errorf("invalid format: parentheses missing or malformed")
+			}
+
+			name := strings.TrimSpace(input[:openParenIndex])
+			url := strings.TrimSpace(input[openParenIndex+1 : closeParenIndex])
+
+			if name == "" {
+				return "", "", fmt.Errorf("invalid format: name is empty")
+			}
+			if url == "" || !strings.HasPrefix(url, "http") {
+				return "", "", fmt.Errorf("invalid format: URL is empty or invalid")
+			}
+
+			return name, url, nil
+		}
+
+		switch previousSectionHeader {
+		case "Relevant dates":
+			// The date is provided in a string like:
+			//  Registered on 2nd January 2006 at 15:04:05.000
+			// We first try to remove the day suffix (st, nd, etc,)
+			// And then try to parse the date
+			re := regexp.MustCompile(`\b(\d{1,2})(st|nd|rd|th)\b`)
+			preprocessed := re.ReplaceAllString(v, `$1`)
+			layout := "Registered on 2 January 2006 at 15:04:05.000"
+
+			parsedTime, err := time.Parse(layout, preprocessed)
+			if err == nil {
+				v = parsedTime.Format("2006-01-02T15:04:05Z")
+			}
+
+		case "Registrar":
+			name, url, err := parseRegistrant(v)
+			if err == nil {
+				v = fmt.Sprintf("%s\nreferral_url: %s", name, url)
+			}
+		}
+
+		if _, ok := tokens[previousSectionHeader]; ok {
+			v = fmt.Sprintf("%s: %s", tokens[previousSectionHeader], v)
+		}
+
+		result += "\n" + v
+
+		previousSectionHeader = sectionHeader
+	}
+
+	return result
+
 }

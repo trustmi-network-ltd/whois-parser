@@ -84,6 +84,7 @@ If there is any problem, please feel free to open a new issue.
 | .fr | [git.fr](fr_git.fr) | [git.fr](fr_git.fr.json) | √ |
 | .fr | [google.fr](fr_google.fr) | [google.fr](fr_google.fr.json) | √ |
 | .fr | [ovh.fr](fr_ovh.fr) | [ovh.fr](fr_ovh.fr.json) | √ |
+| .gg | [google.gg](gg_google.gg) | [google.gg](gg_google.gg.json) | √ |
 | .gov | [fda.gov](gov_fda.gov) | [fda.gov](gov_fda.gov.json) | √ |
 | .gov | [us.gov](gov_us.gov) | [us.gov](gov_us.gov.json) | √ |
 | .gs | [git.gs](gs_git.gs) | [git.gs](gs_git.gs.json) | √ |
@@ -173,6 +174,8 @@ If there is any problem, please feel free to open a new issue.
 | .sexy | [line.sexy](sexy_line.sexy) | [line.sexy](sexy_line.sexy.json) | √ |
 | .sh | [git.sh](sh_git.sh) | [git.sh](sh_git.sh.json) | √ |
 | .sh | [google.sh](sh_google.sh) | [google.sh](sh_google.sh.json) | √ |
+| .sk | [alza.sk](sk_alza.sk) | [alza.sk](sk_alza.sk.json) | √ |
+| .sk | [google.sk](sk_google.sk) | [google.sk](sk_google.sk.json) | √ |
 | .su | [git.su](su_git.su) | [git.su](su_git.su.json) | √ |
 | .su | [google.su](su_google.su) | [google.su](su_google.su.json) | √ |
 | .tel | [github.tel](tel_github.tel) | [github.tel](tel_github.tel.json) | √ |
